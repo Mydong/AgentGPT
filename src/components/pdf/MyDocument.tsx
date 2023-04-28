@@ -9,11 +9,8 @@ import ReactPDF, {
 import View = ReactPDF.View;
 
 Font.register({
-  family: "Roboto,SourceHanSansCN",
+  family: "Roboto",
   fonts: [
-    {
-      src: "/fonts/SourceHanSansCN-Regular.otf",
-    },
     {
       src: "/fonts/Roboto-Regular.ttf",
     },
@@ -33,7 +30,7 @@ const styles = StyleSheet.create({
   },
   section: {
     fontSize: 12,
-    fontFamily: "Roboto,SourceHanSansCN",
+    fontFamily: "Roboto",
     marginVertical: 10,
     lineHeight: 1.5,
   },
