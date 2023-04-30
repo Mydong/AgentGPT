@@ -1,14 +1,10 @@
 import type { ReactNode } from "react";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "next-i18next";
-import { FaClipboard, FaCopy, FaImage, FaSave } from "react-icons/fa";
+import { FaClipboard, FaImage, FaSave } from "react-icons/fa";
 import PopIn from "./motions/popin";
 import Expand from "./motions/expand";
 import * as htmlToImage from "html-to-image";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeHighlight from "rehype-highlight";
-import "highlight.js/styles/github-dark.css";
 import WindowButton from "./WindowButton";
 import PDFButton from "./pdf/PDFButton";
 import FadeIn from "./motions/FadeIn";
@@ -29,7 +25,8 @@ import clsx from "clsx";
 import { getMessageContainerStyle, getTaskStatusIcon } from "./utils/helpers";
 import type { Translation } from "../utils/types";
 import { AnimatePresence } from "framer-motion";
-import { BiExport } from "react-icons/Bi";
+import { CgExport } from "react-icons/cg";
+import MarkdownRenderer from "./MarkdownRenderer";
 
 interface ChatWindowProps extends HeaderProps {
   children?: ReactNode;
@@ -237,13 +234,13 @@ const MacWindowHeader = (props: HeaderProps) => {
         )}
       </AnimatePresence>
       <Menu
-        icon={<BiExport />}
+        icon={<CgExport />}
         name={`${t("Export")}`}
         onChange={() => null}
         items={exportOptions}
         styleClass={{
           container: "relative",
-          input: `bg-[#3a3a3a] animation-duration text-left px-2 text-sm font-mono rounded-lg text-gray/50 border-[2px] border-white/30 font-bold transition-all sm:py-0.5 hover:border-[#1E88E5]/40 hover:bg-[#6b6b6b] focus-visible:outline-none focus:border-[#1E88E5]`,
+          input: `bg-[#3a3a3a] animation-duration text-left py-1 px-2 text-sm font-mono rounded-lg text-gray/50 border-[2px] border-white/30 font-bold transition-all sm:py-0.5 hover:border-[#1E88E5]/40 hover:bg-[#6b6b6b] focus-visible:outline-none focus:border-[#1E88E5]`,
           option: "w-full py-[1px] md:py-0.5",
         }}
       />
@@ -258,33 +255,12 @@ const ChatMessage = ({
   className?: string;
 }) => {
   const [t] = useTranslation();
-  const [showCopy, setShowCopy] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const handleCopyClick = () => {
-    void navigator.clipboard.writeText(message.value);
-    setCopied(true);
-  };
-
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    if (copied) {
-      timeoutId = setTimeout(() => {
-        setCopied(false);
-      }, 2000);
-    }
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [copied]);
 
   return (
     <div
       className={`${getMessageContainerStyle(
         message
       )} mx-2 my-1 rounded-lg border-[2px] bg-white/20 p-1 font-mono text-sm hover:border-[#1E88E5]/40 sm:mx-4 sm:p-3 sm:text-base`}
-      onMouseEnter={() => setShowCopy(true)}
-      onMouseLeave={() => setShowCopy(false)}
-      onClick={handleCopyClick}
     >
       {message.type != MESSAGE_TYPE_SYSTEM && (
         // Avoid for system messages as they do not have an icon and will cause a weird space
@@ -303,22 +279,12 @@ const ChatMessage = ({
       )}
 
       {isAction(message) ? (
-        <div className="prose ml-2 max-w-none">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeHighlight]}
-            components={{
-              ul: (props) => (
-                <ul className="ml-8 list-disc">{props.children}</ul>
-              ),
-              ol: (props) => (
-                <ol className="ml-8 list-decimal">{props.children}</ol>
-              ),
-            }}
-          >
-            {message.info || ""}
-          </ReactMarkdown>
-        </div>
+        <>
+          <hr className="my-2 border-[1px] border-white/20" />
+          <div className="prose max-w-none">
+            <MarkdownRenderer>{message.info || ""}</MarkdownRenderer>
+          </div>
+        </>
       ) : (
         <>
           <span>{message.value}</span>
@@ -329,22 +295,6 @@ const ChatMessage = ({
           }
         </>
       )}
-
-      <div className="relative">
-        {copied ? (
-          <span className="absolute bottom-0 right-0 rounded-full border-2 border-white/30 bg-zinc-800 p-1 px-2 text-gray-300">
-            {t("Copied!")}
-          </span>
-        ) : (
-          <span
-            className={`absolute bottom-0 right-0 rounded-full border-2 border-white/30 bg-zinc-800 p-1 px-2 ${
-              showCopy ? "visible" : "hidden"
-            }`}
-          >
-            <FaCopy className="text-white-300 cursor-pointer" />
-          </span>
-        )}
-      </div>
     </div>
   );
 };
