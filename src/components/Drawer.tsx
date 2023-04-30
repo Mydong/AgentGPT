@@ -172,25 +172,46 @@ const Drawer = ({
             text="Support"
             onClick={handleSupport}
           />
-          <DrawerItem icon={<FaCog />} text="Settings" onClick={showSettings} />
+          <DrawerItem
+            icon={
+              <FaCog className="transition-transform group-hover:rotate-90" />
+            }
+            text="Settings"
+            onClick={showSettings}
+          />
           <FadingHr className="my-2" />
           <div className="flex flex-row items-center">
             <DrawerItem
-              icon={<FaDiscord size={30} />}
+              icon={
+                <FaDiscord
+                  size={30}
+                  className="transition-colors group-hover:fill-current group-hover:text-indigo-400"
+                />
+              }
               text="Discord"
               href="https://discord.gg/jdSBAnmdnY"
               target="_blank"
               small
             />
             <DrawerItem
-              icon={<FaTwitter size={30} />}
+              icon={
+                <FaTwitter
+                  size={30}
+                  className="transition-colors group-hover:fill-current group-hover:text-sky-500"
+                />
+              }
               text="Twitter"
               href="https://twitter.com/asimdotshrestha/status/1644883727707959296"
               target="_blank"
               small
             />
             <DrawerItem
-              icon={<FaGithub size={30} />}
+              icon={
+                <FaGithub
+                  size={30}
+                  className="transition-colors group-hover:fill-current group-hover:text-purple-500"
+                />
+              }
               text="GitHub"
               href="https://github.com/reworkd/AgentGPT"
               target="_blank"
@@ -223,7 +244,7 @@ const DrawerItem = (props: DrawerItemProps) => {
     return (
       <a
         className={clsx(
-          "flex cursor-pointer flex-row items-center rounded-md p-2 hover:bg-white/5",
+          "group flex cursor-pointer flex-row items-center rounded-md p-2 hover:bg-white/5",
           border && "border-[1px] border-white/20",
           `${className || ""}`
         )}
@@ -240,7 +261,7 @@ const DrawerItem = (props: DrawerItemProps) => {
     <button
       type="button"
       className={clsx(
-        "flex cursor-pointer flex-row items-center rounded-md p-2 hover:bg-white/5",
+        "group flex cursor-pointer flex-row items-center rounded-md p-2 hover:bg-white/5",
         border && "border-[1px] border-white/20",
         `${className || ""}`
       )}
