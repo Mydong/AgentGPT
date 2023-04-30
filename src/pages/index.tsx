@@ -24,7 +24,7 @@ import {
   useAgentStore,
   resetAllMessageSlices,
 } from "../components/stores";
-import { isTask, AGENT_PLAY, AUTOMATIC_MODE } from "../types/agentTypes";
+import { isTask, AGENT_PLAY } from "../types/agentTypes";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useSettings } from "../hooks/useSettings";
 
@@ -154,23 +154,24 @@ const Home: NextPage = () => {
     messages.length &&
     !hasSaved;
 
-  const firstButton = isAgentPaused ? (
-    <Button disabled={!isAgentPaused} onClick={handleContinue}>
-      <FaPlay size={20} />
-      <span className="ml-2">{t("Continue")}</span>
-    </Button>
-  ) : (
-    <Button disabled={disableDeployAgent} onClick={handleNewGoal}>
-      {agent == null ? (
-        t("Deploy Agent")
-      ) : (
-        <>
-          <VscLoading className="animate-spin" size={20} />
-          <span className="ml-2">{t("Running")}</span>
-        </>
-      )}
-    </Button>
-  );
+  const firstButton =
+    isAgentPaused && !isAgentStopped ? (
+      <Button ping disabled={!isAgentPaused} onClick={handleContinue}>
+        <FaPlay size={20} />
+        <span className="ml-2">{t("Continue")}</span>
+      </Button>
+    ) : (
+      <Button disabled={disableDeployAgent} onClick={handleNewGoal}>
+        {agent == null ? (
+          t("Deploy Agent")
+        ) : (
+          <>
+            <VscLoading className="animate-spin" size={20} />
+            <span className="ml-2">{t("Running")}</span>
+          </>
+        )}
+      </Button>
+    );
 
   return (
     <DefaultLayout>
