@@ -80,7 +80,7 @@ const ChatWindow = ({
 
   const handleChangeWebSearch = (value: boolean) => {
     // Change this value when we can no longer support web search
-    const WEB_SEARCH_ALLOWED = false;
+    const WEB_SEARCH_ALLOWED = true;
 
     if (WEB_SEARCH_ALLOWED) {
       setIsWebSearchEnabled(value);
@@ -133,7 +133,8 @@ const ChatWindow = ({
               <ChatMessage
                 message={{
                   type: MESSAGE_TYPE_SYSTEM,
-                  value: "👉 " + t("CREATE_AN_AGENT_DESCRIPTION"),
+                  value:
+                    "👉 " + t("CREATE_AN_AGENT_DESCRIPTION", { ns: "chat" }),
                 }}
               />
             </Expand>
