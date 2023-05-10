@@ -109,7 +109,6 @@ use the provided setup script.
 ### 🛠️ Manual Setup
 
 > 🚧 You will need [Nodejs +18 (LTS recommended)](https://nodejs.org/en/) installed.
-
 1. Fork this project:
 
 - [Click here](https://github.com/reworkd/AgentGPT/fork).
@@ -130,17 +129,14 @@ npm install
 4. Create a **.env** file with the following content:
 
 > 🚧 The environment variables must match the following [schema](https://github.com/reworkd/AgentGPT/blob/main/src/env/schema.mjs).
-
 ```bash
 # Deployment Environment:
 NODE_ENV=development
-
 # Next Auth config:
 # Generate a secret with `openssl rand -base64 32`
 NEXTAUTH_SECRET=changeme
 NEXTAUTH_URL=http://localhost:3000
 DATABASE_URL=file:./db.sqlite
-
 # Your open api key
 OPENAI_API_KEY=changeme
 ```
