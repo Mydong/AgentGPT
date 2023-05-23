@@ -1,6 +1,4 @@
-from typing import Any
-
-import requests
+import aiohttp
 
 from reworkd_platform.settings import settings
 from reworkd_platform.web.api.agent.model_settings import ModelSettings
@@ -12,8 +10,8 @@ from reworkd_platform.web.api.agent.tools.utils import summarize
 # https://github.com/hwchase17/langchain/blob/master/langchain/utilities
 
 
-def _google_serper_search_results(
-    search_term: str, search_type: str = "search", **kwargs: Any
+async def _google_serper_search_results(
+    search_term: str, search_type: str = "search"
 ) -> dict:
     headers = {
         "X-API-KEY": settings.serp_api_key or "",
@@ -21,14 +19,15 @@ def _google_serper_search_results(
     }
     params = {
         "q": search_term,
-        **{key: value for key, value in kwargs.items() if value is not None},
     }
-    response = requests.post(
-        f"https://google.serper.dev/{search_type}", headers=headers, params=params
-    )
-    response.raise_for_status()
-    search_results = response.json()
-    return search_results
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(
+            f"https://google.serper.dev/{search_type}", headers=headers, params=params
+        ) as response:
+            response.raise_for_status()
+            search_results = await response.json()
+            return search_results
 
 
 class Search(Tool):
@@ -42,8 +41,8 @@ class Search(Tool):
     def __init__(self, model_settings: ModelSettings):
         super().__init__(model_settings)
 
-    def call(self, goal: str, task: str, input_str: str) -> str:
-        results = _google_serper_search_results(
+    async def call(self, goal: str, task: str, input_str: str) -> str:
+        results = await _google_serper_search_results(
             input_str,
         )
 
@@ -88,6 +87,6 @@ class Search(Tool):
         if len(snippets) == 0:
             return "No good Google Search Result was found"
 
-        summary = summarize(self.model_settings, goal, task, snippets)
+        summary = await summarize(self.model_settings, goal, task, snippets)
 
         return f"{summary}\n\nLinks:\n" + "\n".join([f"- {link}" for link in links])
