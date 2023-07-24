@@ -1,52 +1,76 @@
-import json
-import re
-from typing import List
+from typing import Any, Callable, TypeVar, Dict
+
+from langchain import BasePromptTemplate, LLMChain
+from langchain.chat_models.base import BaseChatModel
+from langchain.schema import BaseOutputParser, OutputParserException
+from openai.error import (
+    AuthenticationError,
+    RateLimitError,
+    ServiceUnavailableError,
+    InvalidRequestError,
+)
+
+from reworkd_platform.schemas.agent import ModelSettings
+from reworkd_platform.web.api.errors import OpenAIError
+
+T = TypeVar("T")
 
 
-def remove_task_prefix(input_str: str) -> str:
-    prefix_pattern = (
-        r"^(Task\s*\d*\.\s*|Task\s*\d*[-:]?\s*|Step\s*\d*["
-        r"-:]?\s*|Step\s*[-:]?\s*|\d+\.\s*|\d+\s*[-:]?\s*|^\.\s*|^\.*)"
-    )
-    return re.sub(prefix_pattern, "", input_str, flags=re.IGNORECASE)
+def parse_with_handling(parser: BaseOutputParser[T], completion: str) -> T:
+    try:
+        return parser.parse(completion)
+    except OutputParserException as e:
+        raise OpenAIError(
+            e, "There was an issue parsing the response from the AI model."
+        )
 
 
-def extract_tasks(text: str, completed_tasks: List[str]) -> List[str]:
-    filtered_tasks = [
-        remove_task_prefix(task)
-        for task in extract_array(text)
-        if real_tasks_filter(task)
-    ]
-    return [task for task in filtered_tasks if task not in completed_tasks]
+async def openai_error_handler(
+    func: Callable[..., Any], *args: Any, settings: ModelSettings, **kwargs: Any
+) -> Any:
+    try:
+        return await func(*args, **kwargs)
+    except ServiceUnavailableError as e:
+        raise OpenAIError(
+            e,
+            "OpenAI is experiencing issues. Visit "
+            "https://status.openai.com/ for more info.",
+            should_log=not settings.custom_api_key,
+        )
+    except InvalidRequestError as e:
+        if e.user_message.startswith("The model:"):
+            raise OpenAIError(
+                e,
+                f"Your API key does not have access to your current model. Please use a different model.",
+                should_log=not settings.custom_api_key,
+            )
+        raise OpenAIError(e, e.user_message)
+    except AuthenticationError as e:
+        raise OpenAIError(
+            e,
+            "Authentication error: Ensure a valid API key is being used.",
+            should_log=not settings.custom_api_key,
+        )
+    except RateLimitError as e:
+        if e.user_message.startswith("You exceeded your current quota"):
+            raise OpenAIError(
+                e,
+                f"Your API key exceeded your current quota, please check your plan and billing details.",
+                should_log=not settings.custom_api_key,
+            )
+        raise OpenAIError(e, e.user_message)
+    except Exception as e:
+        raise OpenAIError(
+            e, "There was an unexpected issue getting a response from the AI model."
+        )
 
 
-def extract_array(input_str: str) -> List[str]:
-    regex = (
-        r"(\[(?:\s*(?:\"(?:[^\"\\]|\\.|\\n)*\"|\'(?:[^\'\\]|\\.|\\n)*\')\s*,"
-        r"?)+\s*\])"
-    )
-    match = re.search(regex, input_str)
-
-    if match and match[0]:
-        try:
-            return json.loads(match[0])
-        except Exception as error:
-            print(f"Error parsing the matched array: {error}")
-
-    print(f"Error, could not extract array from input_string: {input_str}")
-    return []
-
-
-def real_tasks_filter(input_str: str) -> bool:
-    no_task_regex = (
-        r"^No( (new|further|additional|extra|other))? tasks? (is )?("
-        r"required|needed|added|created|inputted).*"
-    )
-    task_complete_regex = r"^Task (complete|completed|finished|done|over|success).*"
-    do_nothing_regex = r"^(\s*|Do nothing(\s.*)?)$"
-
-    return (
-        not re.search(no_task_regex, input_str, re.IGNORECASE)
-        and not re.search(task_complete_regex, input_str, re.IGNORECASE)
-        and not re.search(do_nothing_regex, input_str, re.IGNORECASE)
-    )
+async def call_model_with_handling(
+    model: BaseChatModel,
+    prompt: BasePromptTemplate,
+    args: Dict[str, str],
+    settings: ModelSettings,
+    **kwargs: Any,
+) -> str:
+    chain = LLMChain(llm=model, prompt=prompt)
+    return await openai_error_handler(chain.arun, args, settings=settings, **kwargs)

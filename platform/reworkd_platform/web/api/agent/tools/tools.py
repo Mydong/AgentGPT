@@ -1,4 +1,4 @@
-from typing import Type, List
+from typing import List, Type
 
 from reworkd_platform.web.api.agent.tools.code import Code
 from reworkd_platform.web.api.agent.tools.conclude import Conclude
@@ -16,9 +16,13 @@ def get_available_tools() -> List[Type[Tool]]:
     return get_external_tools() + get_default_tools()
 
 
+def get_available_tools_names() -> List[str]:
+    return [get_tool_name(tool) for tool in get_available_tools()]
+
+
 def get_external_tools() -> List[Type[Tool]]:
     return [
-        # Wikipedia, # Requires an async version
+        # Wikipedia,  # TODO: Remove if async doesn't work
         Image,
         Search,
         Code,
@@ -65,3 +69,7 @@ def get_tool_from_name(tool_name: str) -> Type[Tool]:
 
 def get_default_tool() -> Type[Tool]:
     return Reason
+
+
+def get_default_tool_name() -> str:
+    return get_tool_name(get_default_tool())

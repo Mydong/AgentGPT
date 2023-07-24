@@ -1,8 +1,9 @@
-import ssl
+from ssl import CERT_REQUIRED
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
+from reworkd_platform.services.ssl import get_ssl_context
 from reworkd_platform.settings import settings
 
 
@@ -12,14 +13,14 @@ def create_engine() -> AsyncEngine:
 
     :return: SQLAlchemy engine instance.
     """
-    if settings.environment == "dev":
+    if settings.environment == "development":
         return create_async_engine(
             str(settings.db_url),
             echo=settings.db_echo,
         )
 
-    ssl_context = ssl.create_default_context(cafile=settings.db_ca_path)
-    ssl_context.verify_mode = ssl.CERT_REQUIRED
+    ssl_context = get_ssl_context(settings)
+    ssl_context.verify_mode = CERT_REQUIRED
     connect_args = {"ssl": ssl_context}
 
     return create_async_engine(
